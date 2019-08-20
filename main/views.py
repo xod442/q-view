@@ -25,6 +25,8 @@ from werkzeug import secure_filename
 from mongoengine import Q
 import json
 from main.models import Creds
+import time
+from collections import OrderedDict
 from qumulo.rest_client import RestClient
 
 
@@ -56,7 +58,9 @@ def main_select():
     user = request.form['user']
     password = request.form['password']
 
-    rick.append('fail')
+    ipaddress=ipaddress.encode('utf-8')
+    user=user.encode('utf-8')
+    password=password.encode('utf-8')
 
     # Build database entry to save creds
     creds = Creds(user=user,password=password,ipaddress=ipaddress)
@@ -73,12 +77,34 @@ def main_select():
 
     #
     stats=rc.fs.read_fs_stats()
+    total_bytes=stats['total_size_bytes']
+    free_size=stats['free_size_bytes']
+    block_size_bytes=stats['block_size_bytes']
 
 
-    return render_template('main/index.html', stats=stats)
+    return render_template('main/index.html', total_bytes=total_bytes, free_size=free_size, block_size_bytes=block_size_bytes)
+
+@main_app.route('/main_return', methods=('GET', 'POST'))
+def main_return():
+    # Get user informaation
+    creds = Creds.objects.first()
+    user = creds.user
+    password = creds.password
+    ipaddress= creds.ipaddress
+
+    #
+    rc = RestClient(ipaddress,8000)
+    rc.login(user,password)
+
+    #
+    stats=rc.fs.read_fs_stats()
+    total_bytes=stats['total_size_bytes']
+    free_size=stats['free_size_bytes']
+    block_size_bytes=stats['block_size_bytes']
 
 
-    return render_template('main/index.html')
+    return render_template('main/index.html', total_bytes=total_bytes, free_size=free_size, block_size_bytes=block_size_bytes)
+
 
 @main_app.route('/charts', methods=('GET', 'POST'))
 def charts():
@@ -111,6 +137,52 @@ def preferences():
 @main_app.route('/logout', methods=('GET', 'POST'))
 def logout():
     '''
-    Manage Preferences
+    Logout of system
     '''
     return render_template('main/logout.html')
+
+@main_app.route('/timestamps', methods=('GET', 'POST'))
+def timestamps():
+    '''
+    Get Qumulo Timestamps
+    '''
+
+    # Get user informaation
+    creds = Creds.objects.first()
+    user = creds.user
+    password = creds.password
+    ipaddress= creds.ipaddress
+
+    columns = ["iops.read.rate", "iops.write.rate",
+               "throughput.read.rate", "throughput.write.rate",
+               "reclaim.deferred.rate", "reclaim.snapshot.rate"]
+
+    #
+    feed = []
+    rc = RestClient(ipaddress,8000)
+    rc.login(user,password)
+    #
+    begin_time = int(time.time()) - 60 * 60 * 24
+    results = rc.analytics.time_series_get(begin_time = begin_time)
+    data = {}
+    #
+    for i in range(0,len(results[0]['times'])-1):
+        ts = results[0]['times'][i]
+        data[ts] = [None] * len(columns)
+
+    for series in results:
+        if series['id'] not in columns:
+            continue
+        for i in range(0,len(series['values'])):
+            ts = series['times'][i]
+            data[ts][columns.index(series['id'])] = series['values'][i]
+
+    for key in data.items():
+        tmp=[key[0],key[1][0],key[1][1],key[1][2],key[1][3],key[1][4],key[1][5]]
+        if key[1][0] == 0.0 and key[1][1] == 0.0 and key[1][2] == 0.0 and key[1][3] == 0.0 and key[1][4] == 0.0 and key[1][5] == 0.0:
+            continue
+        feed.append(tmp)
+
+
+
+    return render_template('main/index.sm.html', feed=feed)

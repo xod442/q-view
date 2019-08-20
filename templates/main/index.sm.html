@@ -9,6 +9,42 @@
 
 
 
+<div class="col-1">
+  <div class="panel panel-default templatemo-content-widget white-bg no-padding templatemo-overflow-hidden">
+    <i class="fa fa-times"></i>
+    <div class="panel-heading templatemo-position-relative"><h2 class="text-uppercase">TimeStamps/Rates</h2></div>
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <td>Time</td>
+            <td>iops.read</td>
+            <td>iops.write</td>
+            <td>thoughput.read</td>
+            <td>thoughput.write</td>
+            <td>reclaim.detered</td>
+            <td>reclaim.snapshot</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rate in feed%}
+          <tr>
+            <td>{{rate[0]}}</td>
+            <td>{{rate[1]}}</td>
+            <td>{{rate[2]}}</td>
+            <td>{{rate[3]}}</td>
+            <td>{{rate[4]}}</td>
+            <td>{{rate[5]}}</td>
+            <td>{{rate[6]}}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div> <!-- Second row ends -->
+
 
      <!-- Templatemo Script -->
 
