@@ -23,8 +23,10 @@ from flask import Blueprint, render_template, request, redirect, session, url_fo
 import os
 from werkzeug import secure_filename
 from mongoengine import Q
-import pygal
 import json
+from main.models import Creds
+from qumulo.rest_client import RestClient
+
 
 
 main_app = Blueprint('main_app', __name__)
@@ -48,10 +50,32 @@ def main_select():
     '''
     read creds
     '''
+
     #import cfm_api_utils as c
-    # ipaddress = request.form['ipaddress']
-    # user = request.form['user']
-    # password = request.form['password']
+    ipaddress = request.form['ipaddress']
+    user = request.form['user']
+    password = request.form['password']
+
+    rick.append('fail')
+
+    # Build database entry to save creds
+    creds = Creds(user=user,password=password,ipaddress=ipaddress)
+    # Save the record
+    try:
+        creds.save()
+    except:
+        error="ERR001 - Failed to save login credentials"
+        return render_template('main/dberror.html', error=error)
+
+    #
+    rc = RestClient(ipaddress,8000)
+    rc.login(user,password)
+
+    #
+    stats=rc.fs.read_fs_stats()
+
+
+    return render_template('main/index.html', stats=stats)
 
 
     return render_template('main/index.html')

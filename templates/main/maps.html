@@ -8,7 +8,7 @@
 {% include "navbarq-top.html" %}
 
       <!-- Main content -->
-  
+
         <div class="templatemo-content-container">
           <div class="templatemo-content-widget white-bg">
             <h2 class="margin-bottom-10">Geo Charts</h2>
@@ -86,28 +86,24 @@
               </div>
             </div>
           </div>
-          <footer class="text-right">
-            <p>Copyright &copy; 2084 Company Name
-            | Designed by <a href="http://www.templatemo.com" target="_parent">templatemo</a></p>
-          </footer>
+          
         </div>
       </div>
     </div>
 
-    <!-- JS -->
-    <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>      <!-- jQuery -->
-    <script type="text/javascript" src="js/jquery-migrate-1.2.1.min.js"></script> <!--  jQuery Migrate Plugin -->
-    <script type="text/javascript" src="js/templatemo-script.js"></script>      <!-- Templatemo Script -->
-    <script type="text/javascript" src="jqvmap/jquery.vmap.js"></script>
-    <script type="text/javascript" src="jqvmap/maps/jquery.vmap.world.js"></script>
-    <script type="text/javascript" src="jqvmap/data/jquery.vmap.sampledata.js"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.africa.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.asia.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.australia.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.europe.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.north-america.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/continents/jquery.vmap.south-america.js" type="text/javascript"></script>
-    <script src="jqvmap/maps/jquery.vmap.usa.js" type="text/javascript"></script>
+
+
+    "{{ url_for('static',filename='js/tooplate-scripts.js')}}"
+    <script type="text/javascript" src="{{ url_for('static',filename='jqvmap/jquery.vmap.js')}}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='jqvmap/maps/jquery.vmap.world.js')}}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='jqvmap/data/jquery.vmap.sampledata.js')}}"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.africa.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.asia.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.australia.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.europe.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.north-america.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/continents/jquery.vmap.south-america.js')}}" type="text/javascript"></script>
+    <script src="{{ url_for('static',filename='jqvmap/maps/jquery.vmap.usa.js')}}" type="text/javascript"></script>
     <script type="text/javascript">
 
       function drawMaps(){

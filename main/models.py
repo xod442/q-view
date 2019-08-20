@@ -15,7 +15,6 @@
 # __author__ = "@netwookie"
 # __credits__ = ["Rick Kauffman"]
 # __license__ = "Apache2.0"
-# __version__ = "1.0.0"
 # __maintainer__ = "Rick Kauffman"
 # __email__ = "rick.a.kauffman@hpe.com"
 
@@ -26,5 +25,7 @@ import os
 from application import db
 from utilities.common import utc_now_ts as now
 
-class Vendor(db.Document):
-    vend = db.StringField(db_field="c",required=True, Uniqe=True)
+class Creds(db.Document):
+    user = db.StringField(db_field="u", required=True)
+    password = db.StringField(db_field="p", required=True)
+    ipaddress = db.StringField(db_field="i", required=True)
