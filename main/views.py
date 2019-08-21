@@ -78,17 +78,8 @@ def main_select():
     login_url=root_url+'/v1/session/login'
     who_am_i_url=root_url+'/v1/session/who-am-i'
     version_url=root_url+'/v1/version'
-    import os
-    from werkzeug import secure_filename
-    from mongoengine import Q
-    import json
-    import requests
-    from main.models import Creds
-    import time
-    from collections import OrderedDict
-    from qumulo.rest_client import RestClient
-    requests.packages.urllib3.disable_warnings()
-
+    nodes_url=root_url+'/v1/cluster/nodes/'
+    default_header = {'content-type': 'application/json'}
 
     # Authenticate to controller
     post_data = {'username': user, 'password': password}
