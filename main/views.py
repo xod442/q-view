@@ -78,7 +78,17 @@ def main_select():
     login_url=root_url+'/v1/session/login'
     who_am_i_url=root_url+'/v1/session/who-am-i'
     version_url=root_url+'/v1/version'
-    default_header = {'content-type': 'application/json'}
+    import os
+    from werkzeug import secure_filename
+    from mongoengine import Q
+    import json
+    import requests
+    from main.models import Creds
+    import time
+    from collections import OrderedDict
+    from qumulo.rest_client import RestClient
+    requests.packages.urllib3.disable_warnings()
+
 
     # Authenticate to controller
     post_data = {'username': user, 'password': password}
@@ -106,6 +116,13 @@ def main_select():
 
     version=(json.loads(resp.text))
 
+    # Get cluster nodes
+    resp = requests.get(nodes_url,
+                  headers=default_header,
+                  verify=False)
+
+    nodes=(json.loads(resp.text))
+
 
     #  TODO  replace with proper rest calls
     rc = RestClient(ipaddress,8000)
@@ -121,7 +138,8 @@ def main_select():
                                               free_size=free_size,
                                               block_size_bytes=block_size_bytes,
                                               identity=identity,
-                                              version=version)
+                                              version=version,
+                                              nodes=nodes)
 
 @main_app.route('/main_return', methods=('GET', 'POST'))
 def main_return():
@@ -136,6 +154,7 @@ def main_return():
     login_url=root_url+'/v1/session/login'
     who_am_i_url=root_url+'/v1/session/who-am-i'
     version_url=root_url+'/v1/version'
+    nodes_url=root_url+'/v1/cluster/nodes/'
     default_header = {'content-type': 'application/json'}
 
     # Authenticate to controller
@@ -164,6 +183,13 @@ def main_return():
 
     version=(json.loads(resp.text))
 
+    # Get cluster nodes
+    resp = requests.get(nodes_url,
+                  headers=default_header,
+                  verify=False)
+
+    nodes=(json.loads(resp.text))
+
 
     #  TODO  replace with proper rest calls
     rc = RestClient(ipaddress,8000)
@@ -179,7 +205,8 @@ def main_return():
                                               free_size=free_size,
                                               block_size_bytes=block_size_bytes,
                                               identity=identity,
-                                              version=version)
+                                              version=version,
+                                              nodes=nodes)
 
 
 @main_app.route('/charts', methods=('GET', 'POST'))
