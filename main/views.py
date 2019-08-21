@@ -24,10 +24,12 @@ import os
 from werkzeug import secure_filename
 from mongoengine import Q
 import json
+import requests
 from main.models import Creds
 import time
 from collections import OrderedDict
 from qumulo.rest_client import RestClient
+requests.packages.urllib3.disable_warnings()
 
 
 
@@ -71,10 +73,43 @@ def main_select():
         error="ERR001 - Failed to save login credentials"
         return render_template('main/dberror.html', error=error)
 
-    #
+    # Setting up URLs and default header parameters
+    root_url='https://'+ipaddress+':8000'
+    login_url=root_url+'/v1/session/login'
+    who_am_i_url=root_url+'/v1/session/who-am-i'
+    version_url=root_url+'/v1/version'
+    default_header = {'content-type': 'application/json'}
+
+    # Authenticate to controller
+    post_data = {'username': user, 'password': password}
+
+    resp = requests.post(login_url,
+                  data=json.dumps(post_data),
+                  headers=default_header,
+                  verify=False)
+
+    resp_data = json.loads(resp.text)
+    # Get the bearer token
+    default_header['Authorization'] = 'Bearer ' + resp_data['bearer_token']
+
+    # Get Identity
+    resp = requests.get(who_am_i_url,
+                  headers=default_header,
+                  verify=False)
+
+    identity=(json.loads(resp.text))
+
+    # Get VErsion
+    resp = requests.get(version_url,
+                  headers=default_header,
+                  verify=False)
+
+    version=(json.loads(resp.text))
+
+
+    #  TODO  replace with proper rest calls
     rc = RestClient(ipaddress,8000)
     rc.login(user,password)
-
     #
     stats=rc.fs.read_fs_stats()
     total_bytes=stats['total_size_bytes']
@@ -82,7 +117,11 @@ def main_select():
     block_size_bytes=stats['block_size_bytes']
 
 
-    return render_template('main/index.html', total_bytes=total_bytes, free_size=free_size, block_size_bytes=block_size_bytes)
+    return render_template('main/index.html', total_bytes=total_bytes,
+                                              free_size=free_size,
+                                              block_size_bytes=block_size_bytes,
+                                              identity=identity,
+                                              version=version)
 
 @main_app.route('/main_return', methods=('GET', 'POST'))
 def main_return():
@@ -92,10 +131,43 @@ def main_return():
     password = creds.password
     ipaddress= creds.ipaddress
 
-    #
+    # Setting up URLs and default header parameters
+    root_url='https://'+ipaddress+':8000'
+    login_url=root_url+'/v1/session/login'
+    who_am_i_url=root_url+'/v1/session/who-am-i'
+    version_url=root_url+'/v1/version'
+    default_header = {'content-type': 'application/json'}
+
+    # Authenticate to controller
+    post_data = {'username': user, 'password': password}
+
+    resp = requests.post(login_url,
+                  data=json.dumps(post_data),
+                  headers=default_header,
+                  verify=False)
+
+    resp_data = json.loads(resp.text)
+    # Get the bearer token
+    default_header['Authorization'] = 'Bearer ' + resp_data['bearer_token']
+
+    # Get Identity
+    resp = requests.get(who_am_i_url,
+                  headers=default_header,
+                  verify=False)
+
+    identity=(json.loads(resp.text))
+
+    # Get VErsion
+    resp = requests.get(version_url,
+                  headers=default_header,
+                  verify=False)
+
+    version=(json.loads(resp.text))
+
+
+    #  TODO  replace with proper rest calls
     rc = RestClient(ipaddress,8000)
     rc.login(user,password)
-
     #
     stats=rc.fs.read_fs_stats()
     total_bytes=stats['total_size_bytes']
@@ -103,7 +175,11 @@ def main_return():
     block_size_bytes=stats['block_size_bytes']
 
 
-    return render_template('main/index.html', total_bytes=total_bytes, free_size=free_size, block_size_bytes=block_size_bytes)
+    return render_template('main/index.html', total_bytes=total_bytes,
+                                              free_size=free_size,
+                                              block_size_bytes=block_size_bytes,
+                                              identity=identity,
+                                              version=version)
 
 
 @main_app.route('/charts', methods=('GET', 'POST'))
