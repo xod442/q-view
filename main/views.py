@@ -26,6 +26,8 @@ from mongoengine import Q
 import json
 import requests
 from main.models import Creds
+from utilities.get_creds import get
+from utilities.save_creds import save
 import time
 from collections import OrderedDict
 from qumulo.rest_client import RestClient
@@ -41,6 +43,8 @@ main_app = Blueprint('main_app', __name__)
 def main():
     ''' Display login screen
     '''
+    # Clear credential database on new session.
+    Creds.objects().delete()
 
     return render_template('main/login.html')
 
@@ -55,26 +59,26 @@ def main_select():
     read creds
     '''
 
-    #import cfm_api_utils as c
-    ipaddress = request.form['ipaddress']
-    user = request.form['user']
-    password = request.form['password']
+    # If this is a POSt it is from the login screen capture creds and save
+    if request.method == 'POST':
 
-    ipaddress=ipaddress.encode('utf-8')
-    user=user.encode('utf-8')
-    password=password.encode('utf-8')
+        #Get creds from login
+        ipaddress = request.form['ipaddress']
+        user = request.form['user']
+        password = request.form['password']
 
-    # Build database entry to save creds
-    creds = Creds(user=user,password=password,ipaddress=ipaddress)
-    # Save the record
-    try:
-        creds.save()
-    except:
-        error="ERR001 - Failed to save login credentials"
-        return render_template('main/dberror.html', error=error)
+        # make them UTF-8
+        ipaddress=ipaddress.encode('utf-8')
+        user=user.encode('utf-8')
+        password=password.encode('utf-8')
 
-    # Setting up URLs and default header parameters
-    root_url='https://'+ipaddress+':8000'
+        # Save the creds to mongo
+        savecreds=save(ipaddress,user,password)
+
+    # Returning to the main page if HTTP GET pull creds from DB
+    creds=get()
+     # Setting up URLs and default header parameters
+    root_url='https://'+creds[0]+':8000'
     login_url=root_url+'/v1/session/login'
     who_am_i_url=root_url+'/v1/session/who-am-i'
     version_url=root_url+'/v1/version'
@@ -82,14 +86,20 @@ def main_select():
     default_header = {'content-type': 'application/json'}
 
     # Authenticate to controller
-    post_data = {'username': user, 'password': password}
+    post_data = {'username': creds[1], 'password': creds[2]}
 
     resp = requests.post(login_url,
                   data=json.dumps(post_data),
                   headers=default_header,
                   verify=False)
 
+    # Check to see if the cred are correct
+    if resp.status_code != 200:
+        error="ERR002 -Invalid username/password in credentials"
+        return render_template('main/dberror1.html', error=error)
+
     resp_data = json.loads(resp.text)
+
     # Get the bearer token
     default_header['Authorization'] = 'Bearer ' + resp_data['bearer_token']
 
@@ -100,7 +110,7 @@ def main_select():
 
     identity=(json.loads(resp.text))
 
-    # Get VErsion
+    # Get Version
     resp = requests.get(version_url,
                   headers=default_header,
                   verify=False)
@@ -116,75 +126,8 @@ def main_select():
 
 
     #  TODO  replace with proper rest calls
-    rc = RestClient(ipaddress,8000)
-    rc.login(user,password)
-    #
-    stats=rc.fs.read_fs_stats()
-    total_bytes=stats['total_size_bytes']
-    free_size=stats['free_size_bytes']
-    block_size_bytes=stats['block_size_bytes']
-
-
-    return render_template('main/index.html', total_bytes=total_bytes,
-                                              free_size=free_size,
-                                              block_size_bytes=block_size_bytes,
-                                              identity=identity,
-                                              version=version,
-                                              nodes=nodes)
-
-@main_app.route('/main_return', methods=('GET', 'POST'))
-def main_return():
-    # Get user informaation
-    creds = Creds.objects.first()
-    user = creds.user
-    password = creds.password
-    ipaddress= creds.ipaddress
-
-    # Setting up URLs and default header parameters
-    root_url='https://'+ipaddress+':8000'
-    login_url=root_url+'/v1/session/login'
-    who_am_i_url=root_url+'/v1/session/who-am-i'
-    version_url=root_url+'/v1/version'
-    nodes_url=root_url+'/v1/cluster/nodes/'
-    default_header = {'content-type': 'application/json'}
-
-    # Authenticate to controller
-    post_data = {'username': user, 'password': password}
-
-    resp = requests.post(login_url,
-                  data=json.dumps(post_data),
-                  headers=default_header,
-                  verify=False)
-
-    resp_data = json.loads(resp.text)
-    # Get the bearer token
-    default_header['Authorization'] = 'Bearer ' + resp_data['bearer_token']
-
-    # Get Identity
-    resp = requests.get(who_am_i_url,
-                  headers=default_header,
-                  verify=False)
-
-    identity=(json.loads(resp.text))
-
-    # Get VErsion
-    resp = requests.get(version_url,
-                  headers=default_header,
-                  verify=False)
-
-    version=(json.loads(resp.text))
-
-    # Get cluster nodes
-    resp = requests.get(nodes_url,
-                  headers=default_header,
-                  verify=False)
-
-    nodes=(json.loads(resp.text))
-
-
-    #  TODO  replace with proper rest calls
-    rc = RestClient(ipaddress,8000)
-    rc.login(user,password)
+    rc = RestClient(creds[0],8000)
+    rc.login(creds[1],creds[2])
     #
     stats=rc.fs.read_fs_stats()
     total_bytes=stats['total_size_bytes']
